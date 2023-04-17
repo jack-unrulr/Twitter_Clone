@@ -17,9 +17,9 @@ const CreatePostWizard = () =>{
   const [input, setInput] = useState("");
   const ctx = api.useContext();
   const {mutate, isLoading: isPosting} = api.posts.create.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       setInput("");
-      ctx.posts.getAll.invalidate();
+      await ctx.posts.getAll.invalidate();
     }
   });
   console.log(user?.id)
