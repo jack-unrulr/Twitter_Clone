@@ -3,7 +3,7 @@ import Head from "next/head";
 // import Link from "next/link";
 import { SignInButton,useUser } from "@clerk/nextjs";
 
-import { RouterOutputs, api } from "~/utils/api";
+import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
@@ -40,7 +40,7 @@ const CreatePostWizard = () =>{
         onChange={(e) => setInput(e.target.value)}
         disabled={isPosting}
       />
-      <button onClick = {() => mutate({ content: input})}>Post</button>
+      <button onClick = {async () => await mutate({ content: input})}>Post</button>
     </div>
   )
 }
@@ -54,7 +54,7 @@ const PostView = (props:  PostWithUser) => {
      <Image 
         src={author.profilePicture} 
         className="w-14 h-14 rounded-full"
-        alt={`@${author.username}'s profile picture`}
+        alt={`${author.username ? `@${author.username}'s` : 'User'} profile picture`}
         width={56}
         height={56}
       />
