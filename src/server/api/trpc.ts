@@ -20,6 +20,8 @@ import { type Session } from "next-auth";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/server/db";
 
+import { getAuth } from "@clerk/nextjs/server";
+
 type CreateContextOptions = {
   session: Session | null;
 };
@@ -47,15 +49,28 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = async (opts: CreateNextContextOptions) => {
-  const { req, res } = opts;
+// export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+//   const { req, res } = opts;
 
-  // Get the session from the server using the getServerSession wrapper function
-  const session = await getServerAuthSession({ req, res });
 
-  return createInnerTRPCContext({
-    session,
-  });
+//   // Get the session from the server using the getServerSession wrapper function
+//   const session = await getServerAuthSession({ req, res });
+
+//   return createInnerTRPCContext({
+//     session,
+//   });
+// };
+
+export const createTRPCContext = (opts: CreateNextContextOptions) => {
+  const { req } = opts;
+  const sesh = getAuth(req);
+
+  const userId = sesh.userId;
+
+  return{
+    prisma,
+    userId,
+  };
 };
 
 /**
@@ -107,17 +122,30 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 /** Reusable middleware that enforces users are logged in before running the procedure. */
-const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.session || !ctx.session.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+// const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
+//   if (!ctx.session || !ctx.session.user) {
+//     throw new TRPCError({ code: "UNAUTHORIZED" });
+//   }
+//   return next({
+//     ctx: {
+//       // infers the `session` as non-nullable
+//       session: { ...ctx.session, user: ctx.session.user },
+//     },
+//   });
+// });
+
+const enforceUserIsAuthed = t.middleware(async ({ ctx, next}) => {
+  if (!ctx.userId){
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+    });
   }
   return next({
     ctx: {
-      // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user },
-    },
-  });
-});
+      userId: ctx.userId,
+    }
+  })
+})
 
 /**
  * Protected (authenticated) procedure
